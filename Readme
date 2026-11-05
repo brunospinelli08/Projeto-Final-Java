@@ -1,0 +1,145 @@
+O projeto:
+
+O meu projeto final de POO é um RPG curto que roda no console, feito em Java puro, sem nenhuma biblioteca de fora. Eu chamei o jogo de "A Fortaleza Tomada". A história é simples: uma fortaleza antiga foi tomada por criaturas e o jogador precisa atravessar ela e derrotar o guardião.
+O jogador cria um personagem, dá um nome e escolhe se quer ser Guerreiro, Mago ou Arqueiro. Depois ele enfrenta três inimigos em ordem: o Goblin da entrada, o Esqueleto do corredor e o Guardião da Fortaleza, que é o chefe. Em cada turno ele pode atacar, usar a habilidade especial ou usar um item. Se vencer os três, libertou a fortaleza. Se morrer no caminho, volta para o menu e pode começar de novo.
+Eu não fiz o jogo inteiro de uma vez. Antes de programar, montei a documentação com as regras, as classes e um diagrama. Depois dividi o código em etapas, e cada etapa só acabava quando eu rodava um teste e via tudo dar OK. Assim, quando alguma coisa dava errado, eu sabia que o problema estava na última parte que eu tinha mexido.
+As etapas foram estas:
+1. Personagem, Monstro e Chefe.
+2. Jogador e as três especializações.
+3. Itens, interface e inventário.
+4. O sistema de combate.
+5. O Jogo, com os menus, e a Main.
+6. README e testes com as três classes até o fim.
+
+
+Os pacotes:
+
+Eu dividi o código em cinco pacotes, todos dentro de rpg. A ideia é que cada pacote cuide de um assunto só, assim fica fácil achar as coisas e cada classe tem um lugar que faz sentido.
+• rpg.personagem: tudo que luta no jogo. Personagem, Jogador, Guerreiro, Mago, Arqueiro, Monstro e Chefe.
+• rpg.item: tudo que o jogador carrega. Item, Arma, Pocao, a interface Consumivel e o Inventario.
+• rpg.combate: o SistemaCombate, que organiza os turnos de uma batalha.
+• rpg.util: a classe Entrada, que lê o que o usuário digita.
+• rpg.app: o Jogo, que junta tudo com os menus, e a Main, que só liga o programa.
+O roteiro sugeria quatro pacotes. O quinto, rpg.util, eu criei durante o desenvolvimento. Tanto o combate quanto o jogo precisavam ler números do teclado com a mesma validação, e eu não queria copiar esse código nos dois lugares. Se eu colocasse a leitura dentro do rpg.app, o pacote de combate ia depender do pacote do jogo, o que não faz sentido. Então separei num pacote próprio.
+O pacote rpg.app é o único que usa todos os outros. Nenhum pacote depende dele. Os pacotes personagem e item se conhecem um ao outro, porque o jogador tem um inventário e a poção precisa receber o jogador para curar ele. Isso já estava previsto no roteiro.
+As classes de personagem
+
+Personagem:
+
+É a classe mãe de todo mundo que luta. Ela guarda nome, vida máxima, vida atual, ataque base e defesa. Eu deixei ela abstrata porque no jogo não existe um "personagem genérico": ou é um jogador, ou é um monstro.
+Todos os atributos são private. Eu não fiz setter para a vida. Ela só muda por dois métodos:
+• receberDano(int dano): tira vida, mas nunca deixa ficar abaixo de zero.
+• recuperarVida(int pontos): cura até a vida máxima e devolve quanto curou de verdade. Se o personagem já estiver morto, devolve 0, porque cura não revive.
+O atacar(Personagem alvo) calcula o dano como ataque menos a defesa do alvo, no mínimo 1, e chama o receberDano do alvo. A defesa só é descontada aqui, uma vez. O receberDano não desconta nada, ele só aplica o valor que chegou.
+Um detalhe que eu planejei desde o começo: o atacar não usa o ataque base direto. Ele chama getAtaqueTotal(), que na Personagem só devolve o ataque base. Isso foi pensado para depois o Jogador poder somar a arma sem eu ter que mexer no atacar.
+Também tem o restaurar(), que enche a vida de novo entre as batalhas, e o estaVivo().
+
+Monstro:
+
+É filha de Personagem e não tem nada novo, só o construtor que repassa os valores para o super. O Goblin e o Esqueleto são dois objetos dessa mesma classe com números diferentes. Eu não criei uma classe para cada monstro porque eles não têm comportamento diferente, só valores diferentes.
+Chefe
+O Guardião ataca diferente: ele ganha +4 de ataque antes de descontar a defesa. Por isso ele é uma classe própria, filha de Monstro, e sobrescreve o atacar com @Override. O combate chama inimigo.atacar(jogador) para qualquer inimigo, e o Java escolhe sozinho a versão do Chefe quando é ele. Não tem nenhum if perguntando "é chefe?".
+Jogador
+O Jogador é um Personagem com mais coisas: energia, inventário e a arma equipada. Ele também é abstrato, porque o jogador sempre vai ser Guerreiro, Mago ou Arqueiro.
+O que eu coloquei nele:
+• usarHabilidade(Personagem alvo), getNomeHabilidade() e getCustoHabilidade() são abstratos. Cada classe filha é obrigada a escrever os seus.
+• gastarEnergia(int custo) é protected. Só o próprio jogador e as filhas podem gastar energia. Se não tiver energia suficiente, devolve false e não mexe em nada.
+• getAtaqueTotal() é sobrescrito para somar o bônus da arma equipada. É aqui que o planejamento da Personagem fez sentido.
+• equiparArma(Arma arma) só aceita arma que está no inventário e só troca a referência. Por isso trocar de arma várias vezes não acumula bônus.
+• usarItem(Item item) confere se o item está no inventário e se é Consumivel, chama usar e só tira o item do inventário se o uso deu certo.
+• restaurar() é sobrescrito: chama o super.restaurar() para a vida e enche a energia.
+
+Guerreiro, Mago e Arqueiro:
+
+As três são filhas de Jogador. O construtor de cada uma recebe só o nome e passa o resto para o super. Por exemplo, o Guerreiro chama super(nome, 140, 18, 8, 30). Assim eu não repito atributos que já existem na classe mãe.
+Cada uma sobrescreve o usarHabilidade com uma fórmula diferente:
+• Guerreiro, Golpe poderoso: custa 10, dano é 2 vezes o ataque menos a defesa.
+• Mago, Bola de fogo: custa 12, dano é ataque mais 12 menos metade da defesa (divisão inteira).
+• Arqueiro, Tiro preciso: custa 8, dano é ataque mais 4 e ignora a defesa.
+As três começam tentando gastar a energia. Se não conseguem, devolvem false sem causar dano.
+Os itens
+
+Item:
+
+No jogo existem dois tipos de item: arma e poção. Os dois têm nome e descrição, então criei a classe abstrata Item com esses dois atributos. Ela tem dois métodos abstratos, getTipo() e getEfeito(), para cada item dizer o que é e o que faz. O toString usa esses dois, e é ele que aparece quando eu listo o inventário, tipo "Espada curta (Arma) - +4 de ataque".
+
+Arma:
+
+É filha de Item e só guarda o bônus de ataque. A espada, o cajado e o arco são todos objetos dessa mesma classe, mudando só o nome e o bônus. As versões reforçadas também. Eu não precisei de uma classe para cada arma.
+Consumivel (a interface)
+Essa foi a parte em que eu usei interface. A Consumivel tem um método só:
+boolean usar(Jogador jogador);
+Ela é o contrato de "item que pode ser gasto". A poção implementa, a arma não. Quando o jogador escolhe um item para usar, o Jogador.usarItem pergunta se o item é um Consumivel. Se for, transforma ele numa variável do tipo Consumivel e chama usar por ela. Se não for, recusa. O roteiro pedia que a interface fosse usada de verdade no fluxo do jogo, e não só declarada, e é isso que acontece aqui.
+
+Pocao:
+
+É filha de Item e implementa Consumivel. Ela guarda quanto cura (30). O usar dela ficou bem curto, porque eu reaproveitei o recuperarVida da Personagem: se a cura foi maior que zero, deu certo. Se o jogador estava com a vida cheia ou morto, o recuperarVida devolve 0, o usar devolve false e a poção continua no inventário.
+Foi por isso que eu fiz o recuperarVida devolver um número em vez de não devolver nada lá na primeira etapa.
+Inventario
+É a classe que guarda os itens numa ArrayList<Item> privada. Ela tem métodos para adicionar, remover, ver se contém, pegar pela posição, ver o tamanho e ver se está vazio. O getItens() devolve uma lista que só pode ser lida, então ninguém de fora consegue enfiar ou tirar item sem passar pelos métodos da classe.
+O remover e o contem comparam pelo objeto mesmo. Então se o jogador tem duas poções iguais, elas são dois objetos diferentes, e usar uma não apaga a outra.
+Cada jogador tem o seu inventário, que é criado no construtor do Jogador. Isso é composição: o inventário nasce junto com o jogador e pertence a ele. A arma equipada é diferente: ela é só uma referência que aponta para uma arma que já está dentro do inventário. A arma não sai da lista quando é equipada.
+O combate e o jogo
+
+Entrada:
+
+É a classe que lê o teclado. Ela tem o único Scanner do programa e dois métodos:
+• lerOpcao(mensagem, min, max): lê a linha com nextLine(), tenta converter com Integer.parseInt e, se a pessoa digitou letra, número fora da faixa ou só deu Enter, mostra "Opcao invalida" e pergunta de novo. Ela trata a NumberFormatException, então o programa nunca fecha por causa de uma digitação errada.
+• lerTexto(mensagem): lê o nome do personagem e não aceita texto vazio.
+Os dois são feitos com while, não com o método chamando ele mesmo.
+
+SistemaCombate:
+
+Essa classe organiza uma batalha. Ela recebe o jogador, o inimigo e a Entrada no construtor e tem o método executar(), que devolve true se o jogador ganhou.
+Uma coisa que eu fiz questão: ela não calcula dano nenhum. Quem sabe atacar, usar habilidade e usar item são os personagens. O SistemaCombate só decide a ordem das coisas. Cada turno funciona assim:
+1. Mostra a vida dos dois e a energia do jogador.
+2. O jogador escolhe: atacar, habilidade ou item.
+3. Se a ação foi recusada (sem energia, arma usada como item, poção com vida cheia ou "voltar" na lista de itens), aparece o motivo e o jogador escolhe de novo. O inimigo não ataca nesse caso.
+4. Se o inimigo morreu, a batalha acaba na hora e ele não revida.
+5. Se ele está vivo, ataca com inimigo.atacar(jogador).
+6. Se o jogador morreu, a batalha acaba com derrota. Se não, volta para o passo 1.
+Tem um switch aqui, mas ele é sobre a opção do menu (1, 2 ou 3), não sobre o tipo do personagem. A habilidade em si é escolhida pelo polimorfismo, no jogador.usarHabilidade(inimigo).
+
+Jogo:
+
+O Jogo é quem junta tudo. Ele guarda a Entrada, o jogador atual, a arma reforçada que vai ser a recompensa, a lista de inimigos (ArrayList<Monstro>, com o chefe por último) e em qual etapa o jogador está.
+O que ele faz:
+• Mostra o menu inicial (novo jogo ou sair).
+• Cria o personagem: pede o nome, a classe, e já entrega a arma inicial equipada e duas poções.
+• Mostra o menu da aventura entre as batalhas: consultar personagem, ver inventário e trocar arma, começar a próxima batalha ou encerrar. O menu sempre fala qual é a próxima etapa.
+• Começa cada batalha criando um SistemaCombate novo com o inimigo da vez.
+• Dá as recompensas: uma poção depois do Goblin e a arma reforçada depois do Esqueleto.
+Para a recompensa não vir duas vezes, eu coloquei o avanço da etapa e o prêmio no mesmo método, o concederRecompensa(). Como a etapa já avançou, não tem como ganhar de novo nem repetir a batalha. Depois de cada vitória a vida e a energia voltam ao máximo.
+Toda vez que começa um novo jogo, o novaPartida() cria tudo do zero: jogador, itens e inimigos novos. Nada da partida anterior é aproveitado.
+Na criação do personagem também tem um switch, mas ele só decide qual objeto criar (Guerreiro, Mago ou Arqueiro) e qual arma ele ganha. Depois disso o jogo nunca mais pergunta o tipo do personagem.
+
+Main:
+
+A Main tem uma linha só: new Jogo().iniciar();. O roteiro pedia que ela só iniciasse a aplicação, então toda a lógica ficou nas outras classes.
+Onde está cada conceito de POO
+Esse é o resumo que eu uso para mostrar cada conceito no código:
+• Encapsulamento: todos os atributos são private. A vida só muda pelo receberDano e pelo recuperarVida, a energia pelo gastarEnergia, e os itens pelos métodos do Inventario.
+• Construtores e super: as três especializações recebem só o nome e passam os valores para o super. O Jogador chama o super da Personagem.
+• Classe abstrata: Personagem, Jogador e Item.
+• Herança: Guerreiro, Mago e Arqueiro herdam de Jogador, que herda de Personagem. Chefe herda de Monstro, que herda de Personagem. Arma e Pocao herdam de Item.
+• Sobrescrita: usarHabilidade nas três especializações, atacar no Chefe, getAtaqueTotal e restaurar no Jogador, usar na Pocao, getTipo e getEfeito na Arma e na Pocao. Todos com @Override.
+• Polimorfismo: jogador.usarHabilidade(inimigo) e inimigo.atacar(jogador). A mesma linha faz coisas diferentes dependendo do objeto, sem if de tipo.
+• Interface: Consumivel, implementada pela Pocao e usada no usarItem do Jogador.
+• Relacionamentos: o Jogador possui o Inventario (composição), o Inventario guarda os Itens, a arma equipada é uma referência a uma arma do inventário, e o SistemaCombate recebe os dois participantes.
+• Coleções: ArrayList<Item> no Inventario e ArrayList<Monstro> no Jogo.
+• Pacotes: os cinco pacotes, cada um com um assunto.
+
+Como eu testei:
+
+Para cada etapa eu fiz uma classe de teste no pacote rpg.app que mostra OK ou FALHOU com o valor que deu e o valor que eu esperava. Eu calculei os valores esperados antes, a partir das fórmulas.
+• TesteEtapa1: dano comum, dano mínimo 1, vida que não fica negativa, cura que não passa do máximo e não revive, e o ataque do chefe usando uma variável do tipo Personagem.
+• TesteEtapa2: as três habilidades pela mesma chamada, o gasto de energia, a habilidade recusada sem energia e o ataque comum funcionando com energia zero.
+• TesteEtapa3: equipar só arma que está no inventário, trocar de arma sem acumular bônus, arma recusada como item, poção recusada com vida cheia e saindo uma unidade só quando funciona.
+• TesteEtapa4: uma batalha de verdade no console, para testar digitação errada, vitória e derrota.
+Depois de juntar tudo no Jogo, eu joguei aventuras completas com as três classes. Com os valores do roteiro, as três conseguem vencer o Guardião usando a habilidade, sem precisar de poção: o Guerreiro em 3 turnos, o Mago em 4 e o Arqueiro em 5.
+O que eu mudei em relação ao roteiro
+O roteiro deixava mudar as regras desde que eu explicasse no README. As mudanças foram pequenas:
+• O atacar devolve o dano (int) em vez de void, para o combate mostrar "causou 19 de dano" sem calcular de novo.
+• Criei o pacote rpg.util com a classe Entrada, pelos motivos que expliquei na parte dos pacotes.
+• Acrescentei getNomeHabilidade() e getCustoHabilidade() no Jogador, para o menu mostrar a habilidade certa sem switch por tipo.
+Todos os números (vida, ataque, defesa, energia, custos, itens e inimigos) ficaram iguais aos do roteiro.
