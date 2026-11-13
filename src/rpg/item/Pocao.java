@@ -10,7 +10,6 @@ public class Pocao extends Item implements Consumivel {
         this.pontosCura = pontosCura;
     }
 
-    // recuperarVida ja devolve 0 se o jogador estiver com vida cheia ou derrotado
     @Override
     public boolean usar(Jogador jogador) {
         return jogador.recuperarVida(pontosCura) > 0;

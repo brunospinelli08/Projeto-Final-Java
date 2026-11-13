@@ -15,19 +15,16 @@ public abstract class Personagem {
         this.defesa = defesa;
     }
 
-    // Jogador vai sobrescrever para somar o bonus da arma
     public int getAtaqueTotal() {
         return ataqueBase;
     }
 
-    // Calcula o dano descontando a defesa uma unica vez e aplica no alvo
     public int atacar(Personagem alvo) {
         int dano = Math.max(1, getAtaqueTotal() - alvo.getDefesa());
         alvo.receberDano(dano);
         return dano;
     }
 
-    // So aplica o dano. Nunca desconta defesa aqui
     public void receberDano(int dano) {
         if (dano <= 0) {
             return;
@@ -35,7 +32,6 @@ public abstract class Personagem {
         vidaAtual = Math.max(0, vidaAtual - dano);
     }
 
-    // Recupera ate o maximo e devolve quanto curou. Nao revive
     public int recuperarVida(int pontos) {
         if (pontos <= 0 || !estaVivo()) {
             return 0;
@@ -45,7 +41,6 @@ public abstract class Personagem {
         return efetiva;
     }
 
-    // Usado entre batalhas
     public void restaurar() {
         vidaAtual = vidaMaxima;
     }

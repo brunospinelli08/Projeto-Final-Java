@@ -1,27 +1,33 @@
 package rpg.app;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 
-import rpg.combate.Batalha;
 import rpg.combate.SistemaCombate;
 import rpg.item.Arma;
 import rpg.item.Inventario;
 import rpg.item.Item;
-import rpg.personagem.Especializacao;
+import rpg.item.Pocao;
+import rpg.personagem.Arqueiro;
+import rpg.personagem.Chefe;
+import rpg.personagem.Guerreiro;
 import rpg.personagem.Jogador;
+import rpg.personagem.Mago;
 import rpg.personagem.Monstro;
 import rpg.util.Entrada;
 
-// Versao de CONSOLE do jogo: menus e mensagens. As regras da partida ficam na Aventura
 public class Jogo {
-    private final Entrada entrada;
-    private Aventura aventura;
+    private Entrada entrada;
+    private Jogador jogador;
+    private String classeJogador;
+    private Arma armaReforcada;
+    private ArrayList<Monstro> inimigos;
+    private int etapa;
 
     public Jogo() {
-        this.entrada = new Entrada(new Scanner(System.in)); // unico Scanner do programa
+        this.entrada = new Entrada(new Scanner(System.in));
     }
 
-    // Menu inicial: novo jogo ou sair
     public void iniciar() {
         System.out.println("==========================================");
         System.out.println("          A FORTALEZA TOMADA");
@@ -38,6 +44,7 @@ public class Jogo {
                 return;
             }
             novaPartida();
+            menuAventura();
         }
     }
 
@@ -46,29 +53,56 @@ public class Jogo {
         System.out.println("=== CRIACAO DO PERSONAGEM ===");
         String nome = entrada.lerTexto("Nome do aventureiro: ");
 
-        // A lista de classes vem do enum: nenhum texto de classe escrito a mao aqui
-        Especializacao[] opcoes = Especializacao.values();
         System.out.println("Escolha a especializacao:");
-        for (int i = 0; i < opcoes.length; i++) {
-            System.out.println((i + 1) + " - " + opcoes[i].getNome() + " (" + opcoes[i].getResumo() + ")");
-        }
-        int escolha = entrada.lerOpcao("Especializacao: ", 1, opcoes.length);
+        System.out.println("1 - Guerreiro (Vida 140, Ataque 18, Defesa 8, Energia 30 - Golpe poderoso)");
+        System.out.println("2 - Mago (Vida 100, Ataque 22, Defesa 4, Energia 50 - Bola de fogo)");
+        System.out.println("3 - Arqueiro (Vida 120, Ataque 20, Defesa 6, Energia 40 - Tiro preciso)");
+        int escolha = entrada.lerOpcao("Especializacao: ", 1, 3);
 
-        aventura = new Aventura(nome, opcoes[escolha - 1]); // tudo novo a cada partida
+        Arma armaInicial;
+        switch (escolha) {
+            case 1:
+                jogador = new Guerreiro(nome);
+                classeJogador = "Guerreiro";
+                armaInicial = new Arma("Espada curta", "Arma inicial", 4);
+                armaReforcada = new Arma("Espada reforcada", "Recompensa do corredor", 8);
+                break;
+            case 2:
+                jogador = new Mago(nome);
+                classeJogador = "Mago";
+                armaInicial = new Arma("Cajado", "Arma inicial", 4);
+                armaReforcada = new Arma("Cajado reforcado", "Recompensa do corredor", 8);
+                break;
+            default:
+                jogador = new Arqueiro(nome);
+                classeJogador = "Arqueiro";
+                armaInicial = new Arma("Arco", "Arma inicial", 4);
+                armaReforcada = new Arma("Arco reforcado", "Recompensa do corredor", 8);
+                break;
+        }
+
+        jogador.getInventario().adicionar(armaInicial);
+        jogador.equiparArma(armaInicial);
+        jogador.getInventario().adicionar(new Pocao("Pocao de cura", "Frasco de liquido vermelho", 30));
+        jogador.getInventario().adicionar(new Pocao("Pocao de cura", "Frasco de liquido vermelho", 30));
+
+        inimigos = new ArrayList<Monstro>();
+        inimigos.add(new Monstro("Goblin da entrada", 50, 12, 3));
+        inimigos.add(new Monstro("Esqueleto do corredor", 75, 16, 5));
+        inimigos.add(new Chefe("Guardiao da Fortaleza", 130, 20, 7));
+        etapa = 0;
 
         System.out.println();
         System.out.println("Uma antiga fortaleza foi tomada por criaturas.");
         System.out.println(nome + " precisa atravessa-la e derrotar o seu guardiao.");
-        menuAventura();
     }
 
-    // Menu entre as batalhas. Sai quando a aventura termina (vitoria, derrota ou opcao 0)
     private void menuAventura() {
         while (true) {
-            Monstro proximo = aventura.getProximoInimigo();
+            Monstro proximo = inimigos.get(etapa);
             System.out.println();
-            System.out.println("=== AVENTURA - proxima etapa: " + (aventura.getEtapaAtual() + 1) + " de "
-                    + aventura.getTotalEtapas() + " (" + proximo.getNome() + ") ===");
+            System.out.println("=== AVENTURA - proxima etapa: " + (etapa + 1) + " de " + inimigos.size()
+                    + " (" + proximo.getNome() + ") ===");
             System.out.println("1 - Consultar personagem");
             System.out.println("2 - Consultar inventario e trocar equipamento");
             System.out.println("3 - Iniciar a proxima batalha");
@@ -80,16 +114,18 @@ public class Jogo {
             } else if (opcao == 2) {
                 consultarInventario();
             } else if (opcao == 3) {
-                boolean venceu = jogarBatalha();
+                SistemaCombate combate = new SistemaCombate(jogador, proximo, entrada);
+                boolean venceu = combate.executar();
                 if (!venceu) {
                     System.out.println();
                     System.out.println("A fortaleza continua tomada. Fim da aventura.");
                     return;
                 }
-                if (aventura.foiConcluida()) {
+                concederRecompensa();
+                if (etapa == inimigos.size()) {
                     System.out.println();
                     System.out.println("*** O Guardiao caiu. A fortaleza foi libertada! ***");
-                    System.out.println("Parabens, " + aventura.getJogador().getNome() + "!");
+                    System.out.println("Parabens, " + jogador.getNome() + "!");
                     return;
                 }
             } else {
@@ -99,43 +135,53 @@ public class Jogo {
         }
     }
 
-    private boolean jogarBatalha() {
-        System.out.println();
-        System.out.println(aventura.getDescricaoLocal());
-        Batalha batalha = aventura.iniciarBatalha();
-        boolean venceu = new SistemaCombate(batalha, entrada).executar();
-        if (venceu) {
-            for (String mensagem : aventura.registrarVitoria(batalha)) {
-                System.out.println(mensagem);
-            }
+    private void concederRecompensa() {
+        if (etapa == 0) {
+            jogador.getInventario().adicionar(new Pocao("Pocao de cura", "Frasco de liquido vermelho", 30));
+            System.out.println("Recompensa: uma Pocao de cura foi adicionada ao inventario.");
+        } else if (etapa == 1) {
+            jogador.getInventario().adicionar(armaReforcada);
+            System.out.println("Recompensa: " + armaReforcada.getNome() + " (+" + armaReforcada.getBonusAtaque()
+                    + " de ataque). Equipe pelo inventario antes da proxima batalha.");
         }
-        return venceu;
+        etapa++;
+
+        jogador.restaurar();
+        if (etapa < inimigos.size()) {
+            System.out.println("Vida e energia restauradas.");
+        }
     }
 
     private void consultarPersonagem() {
-        Jogador jogador = aventura.getJogador();
         Arma arma = jogador.getArmaEquipada();
-        int bonus = (arma == null) ? 0 : arma.getBonusAtaque();
+        int bonus = 0;
+        String nomeArma = "nenhuma";
+        if (arma != null) {
+            bonus = arma.getBonusAtaque();
+            nomeArma = arma.getNome();
+        }
         System.out.println();
-        System.out.println("Nome: " + jogador.getNome() + " (" + jogador.getClass().getSimpleName() + ")");
+        System.out.println("Nome: " + jogador.getNome() + " (" + classeJogador + ")");
         System.out.println("Vida: " + jogador.getVidaAtual() + "/" + jogador.getVidaMaxima());
         System.out.println("Energia: " + jogador.getEnergiaAtual() + "/" + jogador.getEnergiaMaxima());
         System.out.println("Ataque: " + jogador.getAtaqueBase() + " + " + bonus + " = " + jogador.getAtaqueTotal());
         System.out.println("Defesa: " + jogador.getDefesa());
         System.out.println("Habilidade: " + jogador.getNomeHabilidade() + " (custo " + jogador.getCustoHabilidade() + ")");
-        System.out.println("Arma: " + ((arma == null) ? "nenhuma" : arma.getNome()));
+        System.out.println("Arma: " + nomeArma);
     }
 
     private void consultarInventario() {
-        Jogador jogador = aventura.getJogador();
         Inventario inventario = jogador.getInventario();
         while (true) {
             System.out.println();
             System.out.println("=== INVENTARIO ===");
             for (int i = 0; i < inventario.tamanho(); i++) {
                 Item item = inventario.getItem(i);
-                String marca = (item == jogador.getArmaEquipada()) ? " [equipada]" : "";
-                System.out.println((i + 1) + " - " + item + marca);
+                if (item == jogador.getArmaEquipada()) {
+                    System.out.println((i + 1) + " - " + item + " [equipada]");
+                } else {
+                    System.out.println((i + 1) + " - " + item);
+                }
             }
             System.out.println("Digite o numero de uma arma para equipar, ou 0 para voltar.");
             int opcao = entrada.lerOpcao("Opcao: ", 0, inventario.tamanho());

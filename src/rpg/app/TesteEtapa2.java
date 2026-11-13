@@ -8,7 +8,6 @@ import rpg.personagem.Monstro;
 
 public class TesteEtapa2 {
     public static void main(String[] args) {
-        // Referencias do tipo base Jogador: polimorfismo
         Jogador guerreiro = new Guerreiro("Teste G");
         Jogador mago = new Mago("Teste M");
         Jogador arqueiro = new Arqueiro("Teste A");
@@ -37,8 +36,8 @@ public class TesteEtapa2 {
 
         System.out.println("--- Sem energia ---");
         Monstro boneco = new Monstro("Boneco", 999, 1, 0);
-        guerreiro.usarHabilidade(boneco); // energia 20 -> 10
-        guerreiro.usarHabilidade(boneco); // energia 10 -> 0
+        guerreiro.usarHabilidade(boneco);
+        guerreiro.usarHabilidade(boneco);
         int vidaAntes = boneco.getVidaAtual();
         conferir("Habilidade sem energia retorna false", guerreiro.usarHabilidade(boneco), false);
         conferir("Energia nao fica negativa", guerreiro.getEnergiaAtual(), 0);
@@ -53,12 +52,18 @@ public class TesteEtapa2 {
     }
 
     private static void conferir(String descricao, int obtido, int esperado) {
-        String status = obtido == esperado ? "OK    " : "FALHOU";
+        String status = "FALHOU";
+        if (obtido == esperado) {
+            status = "OK    ";
+        }
         System.out.println(status + " " + descricao + ": obtido " + obtido + ", esperado " + esperado);
     }
 
     private static void conferir(String descricao, boolean obtido, boolean esperado) {
-        String status = obtido == esperado ? "OK    " : "FALHOU";
+        String status = "FALHOU";
+        if (obtido == esperado) {
+            status = "OK    ";
+        }
         System.out.println(status + " " + descricao + ": obtido " + obtido + ", esperado " + esperado);
     }
 }

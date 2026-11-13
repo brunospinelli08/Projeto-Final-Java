@@ -12,7 +12,6 @@ public class Arqueiro extends Jogador {
         if (!gastarEnergia(CUSTO)) {
             return false;
         }
-        // ignora a defesa do alvo
         int dano = getAtaqueTotal() + 4;
         alvo.receberDano(dano);
         return true;

@@ -15,24 +15,24 @@ public abstract class Jogador extends Personagem {
         super(nome, vidaMaxima, ataqueBase, defesa);
         this.energiaMaxima = energiaMaxima;
         this.energiaAtual = energiaMaxima;
-        this.inventario = new Inventario(); // composicao: o inventario nasce com o jogador
+        this.inventario = new Inventario();
     }
 
-    // Cada especializacao implementa a sua regra
     public abstract boolean usarHabilidade(Personagem alvo);
 
     public abstract String getNomeHabilidade();
 
     public abstract int getCustoHabilidade();
 
-    // Ataque base + bonus da arma equipada (0 se estiver sem arma)
     @Override
     public int getAtaqueTotal() {
-        int bonus = (armaEquipada == null) ? 0 : armaEquipada.getBonusAtaque();
+        int bonus = 0;
+        if (armaEquipada != null) {
+            bonus = armaEquipada.getBonusAtaque();
+        }
         return getAtaqueBase() + bonus;
     }
 
-    // So equipa arma que esta no inventario. Troca a referencia, nao soma bonus
     public boolean equiparArma(Arma arma) {
         if (arma == null || !inventario.contem(arma)) {
             return false;
@@ -41,7 +41,6 @@ public abstract class Jogador extends Personagem {
         return true;
     }
 
-    // Usa o item pela interface Consumivel e so remove se o uso deu certo
     public boolean usarItem(Item item) {
         if (item == null || !inventario.contem(item)) {
             return false;
@@ -57,7 +56,6 @@ public abstract class Jogador extends Personagem {
         return true;
     }
 
-    // Gasta energia so se tiver o suficiente. Se nao tiver, nao altera nada
     protected boolean gastarEnergia(int custo) {
         if (custo < 0 || energiaAtual < custo) {
             return false;
@@ -66,7 +64,6 @@ public abstract class Jogador extends Personagem {
         return true;
     }
 
-    // Entre batalhas: vida cheia (super) e energia cheia
     @Override
     public void restaurar() {
         super.restaurar();
@@ -80,7 +77,10 @@ public abstract class Jogador extends Personagem {
 
     @Override
     public String toString() {
-        String arma = (armaEquipada == null) ? "nenhuma" : armaEquipada.getNome();
+        String arma = "nenhuma";
+        if (armaEquipada != null) {
+            arma = armaEquipada.getNome();
+        }
         return super.toString() + " Energia " + energiaAtual + "/" + energiaMaxima + " | Arma: " + arma;
     }
 }

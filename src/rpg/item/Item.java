@@ -9,7 +9,6 @@ public abstract class Item {
         this.descricao = descricao;
     }
 
-    // Cada tipo de item diz o que e e o que faz
     public abstract String getTipo();
 
     public abstract String getEfeito();

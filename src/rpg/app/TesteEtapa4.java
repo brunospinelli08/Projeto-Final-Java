@@ -2,7 +2,6 @@ package rpg.app;
 
 import java.util.Scanner;
 
-import rpg.combate.Batalha;
 import rpg.combate.SistemaCombate;
 import rpg.item.Arma;
 import rpg.item.Pocao;
@@ -36,10 +35,14 @@ public class TesteEtapa4 {
         jogador.getInventario().adicionar(new Pocao("Pocao de cura", "Frasco vermelho", 30));
         jogador.getInventario().adicionar(new Pocao("Pocao de cura", "Frasco vermelho", 30));
 
-        Batalha batalha = new Batalha(jogador, inimigo);
-        boolean venceu = new SistemaCombate(batalha, entrada).executar();
+        SistemaCombate combate = new SistemaCombate(jogador, inimigo, entrada);
+        boolean venceu = combate.executar();
         System.out.println();
-        System.out.println(venceu ? "RESULTADO: vitoria" : "RESULTADO: derrota");
+        if (venceu) {
+            System.out.println("RESULTADO: vitoria");
+        } else {
+            System.out.println("RESULTADO: derrota");
+        }
         System.out.println(jogador);
     }
 }

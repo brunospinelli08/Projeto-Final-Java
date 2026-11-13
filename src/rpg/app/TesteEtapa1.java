@@ -19,7 +19,7 @@ public class TesteEtapa1 {
         treino.atacar(goblin);
         treino.atacar(goblin);
         conferir("Vida nao fica negativa", goblin.getVidaAtual(), 0);
-        conferir("Goblin derrotado (1 = sim)", goblin.estaVivo() ? 0 : 1, 1);
+        conferir("Goblin derrotado", goblin.estaVivo(), false);
         conferir("Cura em derrotado", goblin.recuperarVida(30), 0);
 
         conferir("Dano do chefe via Personagem (20+4-8)", chefe.atacar(treino), 16);
@@ -27,8 +27,18 @@ public class TesteEtapa1 {
     }
 
     private static void conferir(String descricao, int obtido, int esperado) {
-        String status = obtido == esperado ? "OK    " : "FALHOU";
+        String status = "FALHOU";
+        if (obtido == esperado) {
+            status = "OK    ";
+        }
+        System.out.println(status + " " + descricao + ": obtido " + obtido + ", esperado " + esperado);
+    }
+
+    private static void conferir(String descricao, boolean obtido, boolean esperado) {
+        String status = "FALHOU";
+        if (obtido == esperado) {
+            status = "OK    ";
+        }
         System.out.println(status + " " + descricao + ": obtido " + obtido + ", esperado " + esperado);
     }
 }
-

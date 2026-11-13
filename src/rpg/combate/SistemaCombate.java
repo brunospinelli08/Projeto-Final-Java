@@ -1,42 +1,50 @@
 package rpg.combate;
 
+import rpg.item.Consumivel;
 import rpg.item.Inventario;
 import rpg.item.Item;
 import rpg.personagem.Jogador;
 import rpg.personagem.Monstro;
 import rpg.util.Entrada;
 
-// Versao de CONSOLE do combate: so le o teclado, chama a Batalha e imprime o resultado
 public class SistemaCombate {
-    private final Batalha batalha;
-    private final Entrada entrada;
+    private Jogador jogador;
+    private Monstro inimigo;
+    private Entrada entrada;
 
-    public SistemaCombate(Batalha batalha, Entrada entrada) {
-        this.batalha = batalha;
+    public SistemaCombate(Jogador jogador, Monstro inimigo, Entrada entrada) {
+        this.jogador = jogador;
+        this.inimigo = inimigo;
         this.entrada = entrada;
     }
 
-    // Executa a batalha inteira. Retorna true se o jogador venceu
     public boolean executar() {
         System.out.println();
-        System.out.println("=== Batalha: " + batalha.getJogador().getNome() + " x " + batalha.getInimigo().getNome() + " ===");
+        System.out.println("=== Batalha: " + jogador.getNome() + " x " + inimigo.getNome() + " ===");
 
-        while (!batalha.terminou()) {
-            exibirStatus();
-            ResultadoTurno resultado = lerEExecutarAcao();
-            if (resultado == null) {
-                continue; // voltou da lista de itens: nada aconteceu
+        while (true) {
+            mostrarStatus();
+            boolean acaoFeita = escolherAcao();
+            if (!acaoFeita) {
+                continue;
             }
-            for (String mensagem : resultado.getMensagens()) {
-                System.out.println(mensagem);
+
+            if (!inimigo.estaVivo()) {
+                System.out.println(inimigo.getNome() + " foi derrotado!");
+                return true;
+            }
+
+            int dano = inimigo.atacar(jogador);
+            System.out.println(inimigo.getNome() + " ataca e causa " + dano + " de dano.");
+
+            if (!jogador.estaVivo()) {
+                System.out.println(jogador.getNome() + " foi derrotado...");
+                return false;
             }
         }
-        return batalha.getEstado() == EstadoBatalha.VITORIA;
     }
 
-    private void exibirStatus() {
-        Jogador jogador = batalha.getJogador();
-        Monstro inimigo = batalha.getInimigo();
+    private void mostrarStatus() {
         System.out.println();
         System.out.println(jogador.getNome() + " - Vida " + jogador.getVidaAtual() + "/" + jogador.getVidaMaxima()
                 + " | Energia " + jogador.getEnergiaAtual() + "/" + jogador.getEnergiaMaxima());
@@ -46,37 +54,61 @@ public class SistemaCombate {
         System.out.println("3 - Usar item");
     }
 
-    private ResultadoTurno lerEExecutarAcao() {
+    private boolean escolherAcao() {
         int opcao = entrada.lerOpcao("Sua acao: ", 1, 3);
         switch (opcao) {
             case 1:
-                return batalha.atacar();
+                int dano = jogador.atacar(inimigo);
+                System.out.println(jogador.getNome() + " ataca e causa " + dano + " de dano.");
+                return true;
             case 2:
-                return batalha.usarHabilidade();
+                return usarHabilidade();
             default:
-                Item item = escolherItem();
-                return (item == null) ? null : batalha.usarItem(item);
+                return usarItem();
         }
     }
 
-    // Devolve o item escolhido, ou null se o jogador voltou
-    private Item escolherItem() {
-        Jogador jogador = batalha.getJogador();
+    private boolean usarHabilidade() {
+        int vidaAntes = inimigo.getVidaAtual();
+        if (!jogador.usarHabilidade(inimigo)) {
+            System.out.println("Energia insuficiente para " + jogador.getNomeHabilidade() + ".");
+            return false;
+        }
+        int dano = vidaAntes - inimigo.getVidaAtual();
+        System.out.println(jogador.getNome() + " usa " + jogador.getNomeHabilidade() + " e causa " + dano + " de dano.");
+        return true;
+    }
+
+    private boolean usarItem() {
         Inventario inventario = jogador.getInventario();
         if (inventario.estaVazio()) {
             System.out.println("Inventario vazio.");
-            return null;
+            return false;
         }
 
         System.out.println("Itens:");
         for (int i = 0; i < inventario.tamanho(); i++) {
-            Item item = inventario.getItem(i);
-            String marca = (item == jogador.getArmaEquipada()) ? " [equipada]" : "";
-            System.out.println((i + 1) + " - " + item + marca);
+            System.out.println((i + 1) + " - " + inventario.getItem(i));
         }
         System.out.println("0 - Voltar");
 
         int opcao = entrada.lerOpcao("Item: ", 0, inventario.tamanho());
-        return (opcao == 0) ? null : inventario.getItem(opcao - 1);
+        if (opcao == 0) {
+            return false;
+        }
+
+        Item item = inventario.getItem(opcao - 1);
+        int vidaAntes = jogador.getVidaAtual();
+        if (!jogador.usarItem(item)) {
+            if (item instanceof Consumivel) {
+                System.out.println("Sua vida ja esta cheia. O item nao foi usado.");
+            } else {
+                System.out.println(item.getNome() + " nao pode ser consumido.");
+            }
+            return false;
+        }
+        int curado = jogador.getVidaAtual() - vidaAntes;
+        System.out.println(jogador.getNome() + " usa " + item.getNome() + " e recupera " + curado + " de vida.");
+        return true;
     }
 }

@@ -42,7 +42,7 @@ public class TesteEtapa3 {
         conferir("Pocao com vida cheia e recusada", guerreiro.usarItem(pocao1), false);
         conferir("Inventario nao mudou", guerreiro.getInventario().tamanho(), qtdAntes);
 
-        guerreiro.receberDano(12); // 140 -> 128
+        guerreiro.receberDano(12);
         conferir("Pocao com vida parcial funciona", guerreiro.usarItem(pocao1), true);
         conferir("Cura so ate o maximo", guerreiro.getVidaAtual(), 140);
         conferir("Saiu exatamente uma unidade", guerreiro.getInventario().tamanho(), qtdAntes - 1);
@@ -66,12 +66,18 @@ public class TesteEtapa3 {
     }
 
     private static void conferir(String descricao, int obtido, int esperado) {
-        String status = obtido == esperado ? "OK    " : "FALHOU";
+        String status = "FALHOU";
+        if (obtido == esperado) {
+            status = "OK    ";
+        }
         System.out.println(status + " " + descricao + ": obtido " + obtido + ", esperado " + esperado);
     }
 
     private static void conferir(String descricao, boolean obtido, boolean esperado) {
-        String status = obtido == esperado ? "OK    " : "FALHOU";
+        String status = "FALHOU";
+        if (obtido == esperado) {
+            status = "OK    ";
+        }
         System.out.println(status + " " + descricao + ": obtido " + obtido + ", esperado " + esperado);
     }
 }

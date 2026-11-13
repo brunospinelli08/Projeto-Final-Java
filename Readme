@@ -76,7 +76,7 @@ Pocao:
 É filha de Item e implementa Consumivel. Ela guarda quanto cura (30). O usar dela ficou bem curto, porque eu reaproveitei o recuperarVida da Personagem: se a cura foi maior que zero, deu certo. Se o jogador estava com a vida cheia ou morto, o recuperarVida devolve 0, o usar devolve false e a poção continua no inventário.
 Foi por isso que eu fiz o recuperarVida devolver um número em vez de não devolver nada lá na primeira etapa.
 Inventario
-É a classe que guarda os itens numa ArrayList<Item> privada. Ela tem métodos para adicionar, remover, ver se contém, pegar pela posição, ver o tamanho e ver se está vazio. O getItens() devolve uma lista que só pode ser lida, então ninguém de fora consegue enfiar ou tirar item sem passar pelos métodos da classe.
+É a classe que guarda os itens numa ArrayList<Item> privada. Ela tem métodos para adicionar, remover, ver se contém, pegar pela posição, ver o tamanho e ver se está vazio.
 O remover e o contem comparam pelo objeto mesmo. Então se o jogador tem duas poções iguais, elas são dois objetos diferentes, e usar uma não apaga a outra.
 Cada jogador tem o seu inventário, que é criado no construtor do Jogador. Isso é composição: o inventário nasce junto com o jogador e pertence a ele. A arma equipada é diferente: ela é só uma referência que aponta para uma arma que já está dentro do inventário. A arma não sai da lista quando é equipada.
 O combate e o jogo

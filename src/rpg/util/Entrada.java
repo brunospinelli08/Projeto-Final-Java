@@ -9,7 +9,6 @@ public class Entrada {
         this.scanner = scanner;
     }
 
-    // Repete ate o usuario digitar um numero inteiro entre min e max
     public int lerOpcao(String mensagem, int min, int max) {
         while (true) {
             System.out.print(mensagem);
@@ -20,13 +19,11 @@ public class Entrada {
                     return valor;
                 }
             } catch (NumberFormatException e) {
-                // entrada nao numerica: cai na mensagem abaixo e pede de novo
             }
             System.out.println("Opcao invalida. Digite um numero entre " + min + " e " + max + ".");
         }
     }
 
-    // Repete ate o usuario digitar algum texto
     public String lerTexto(String mensagem) {
         while (true) {
             System.out.print(mensagem);
